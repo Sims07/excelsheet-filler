@@ -10,7 +10,7 @@ Ce type d'outil de saisie des temps ne permet généralement pas d'ajouter un bo
 
 ## Installation
 
-1. Ouvre [`install.html`](.install.html) dans ton navigateur (ou héberge-le, ex: via GitHub Pages)
+1. Ouvre [`install.html`](./install.html) dans ton navigateur (ou héberge-le, ex: via GitHub Pages)
 2. Glisse le bouton **"ExcelSheet Time Filler"** dans ta barre de favoris
 
 Sinon, en usage ponctuel sans installation :
