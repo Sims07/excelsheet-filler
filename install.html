@@ -1,155 +1,189 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ExcelSheet Time Filler — Installation</title>
-<style>
-  :root {
-    --blue: #2a8dd4;
-    --green: #27ae60;
-    --bg: #f7f9fb;
-    --border: #ddd;
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-    background: var(--bg);
-    color: #222;
-    margin: 0;
-    padding: 40px 20px;
-    line-height: 1.5;
-  }
-  .container {
-    max-width: 720px;
-    margin: 0 auto;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 32px 36px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  }
-  h1 {
-    font-size: 22px;
-    margin-top: 0;
-    color: var(--blue);
-  }
-  h2 {
-    font-size: 16px;
-    margin-top: 32px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 6px;
-  }
-  p { font-size: 14px; }
-  .bookmarklet-box {
-    background: var(--bg);
-    border: 1px dashed var(--blue);
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    margin: 20px 0;
-  }
-  .bookmarklet-btn {
-    display: inline-block;
-    background: var(--blue);
-    color: #fff !important;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    padding: 12px 22px;
-    border-radius: 6px;
-    cursor: grab;
-    user-select: none;
-  }
-  .bookmarklet-btn:active { cursor: grabbing; }
-  .hint {
-    font-size: 12px;
-    color: #666;
-    margin-top: 10px;
-  }
-  ol, ul { font-size: 14px; padding-left: 20px; }
-  code {
-    background: #eee;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 13px;
-  }
-  .version-tag {
-    display: inline-block;
-    background: var(--green);
-    color: #fff;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 8px;
-    vertical-align: middle;
-  }
-  footer {
-    margin-top: 32px;
-    font-size: 12px;
-    color: #999;
-    text-align: center;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installateur - Visionneuse Carto SI</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 40px 20px;
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h2 {
+            color: #007aff;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 12px;
+            font-size: 24px;
+        }
+        .instructions {
+            background-color: #f0f7ff;
+            border-left: 4px solid #007aff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 15px;
+        }
+        .step {
+            margin-bottom: 15px;
+            padding-left: 5px;
+        }
+        .step-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: #007aff;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            font-size: 13px;
+            margin-right: 10px;
+        }
+        #action-area {
+            min-height: 100px;
+            margin-top: 20px;
+        }
+        #btn-container {
+            text-align: center;
+            margin: 35px 0 20px 0;
+        }
+        #drag-btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background-color: #007aff;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+            cursor: move;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 16px;
+        }
+        #drag-btn:hover {
+            background-color: #0062cc;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,122,255,0.4);
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #86868b;
+            text-align: center;
+            border-top: 1px solid #f0f2f5;
+            padding-top: 15px;
+        }
+        code {
+            background-color: #f4f6f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 13px;
+        }
+        .loading {
+            color: #555;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            color: #ff3b30;
+            background-color: #ffebe6;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #ff3b30;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🕒 ExcelSheet Time Filler <span class="version-tag">v0.1.0</span></h1>
-    <p>
-      Remplit automatiquement la grille de saisie des temps de Project Web App (PWA)
-      à partir d'un template de semaine que tu définis une seule fois.
-    </p>
 
-    <h2>1. Installer le bookmarklet</h2>
-    <p>Glisse le bouton ci-dessous dans ta barre de favoris (affiche-la avec <code>Ctrl+Maj+B</code> si besoin) :</p>
-
-    <div class="bookmarklet-box">
-      <a class="bookmarklet-btn" id="bookmarkletLink" href="#" draggable="true">📌 ExcelSheet Time Filler</a>
-      <div class="hint">Glisser-déposer ce bouton dans la barre de favoris de ton navigateur</div>
+<div class="container">
+    <h2>🕒 ExcelSheet Time Filler</h2>
+    <p>Générez votre favori interactif de manière dynamique à partir de la dernière version du code source.</p>
+    
+    <div id="action-area">
+        <div class="loading">Chargement et empaquetage du script en cours...</div>
     </div>
 
-    <h2>2. Utiliser l'outil</h2>
-    <ol>
-      <li>Va sur ta page <strong>Tâches</strong> dans ExcelSheet</li>
-      <li>Clique sur le favori <strong>ExcelSheet Time Filler</strong> installé à l'étape 1</li>
-      <li>Un panneau flottant apparaît : renseigne tes lignes (tâche + valeur par jour)</li>
-      <li>Clique sur <strong>« 💾 Enregistrer le template »</strong> pour le sauvegarder localement</li>
-      <li>Clique sur <strong>« ▶ Appliquer sur la semaine »</strong> pour lancer le remplissage automatique</li>
-    </ol>
-
-    <h2>Alternative sans installation</h2>
-    <p>
-      Tu peux aussi coller directement le contenu de
-      <code>pwa-time-filler.js</code> dans la console développeur (<code>F12</code>)
-      de la page Tâches ExcelSheet, sans passer par le favori.
-    </p>
-
-    <h2>Notes</h2>
-    <ul>
-      <li>Le template est sauvegardé dans le <code>localStorage</code> de ton navigateur : il reste disponible tant que tu ne vides pas les données du site.</li>
-      <li>Les tâches à remplir doivent être visibles dans la grille (pas de groupe replié) au moment de l'exécution.</li>
-    </ul>
-
-    <footer>
-      PWA Time Filler — code source sur
-      <a href="https://github.com/Sims07/pwa-time-filler" target="_blank">GitHub</a>
-    </footer>
-  </div>
+    <div class="footer">
+        Développé pour les Architectes Solution. Version Plein Écran persistante avec synchronisation dynamique des Image Maps cliquables.
+    </div>
+</div>
 
 <script>
-  // Charge dynamiquement la dernière version du script depuis GitHub (raw)
-  // à ajuster si le nom du repo ou la branche diffère.
-  const SCRIPT_URL = 'https://raw.githubusercontent.com/Sims07/excelsheet-filler/refs/heads/main/excelsheet-time-filler.js';
+    // URL du fichier contenant le code source JS de la visionneuse
+    // Modifiez cette adresse si votre fichier cartosi-viewer.js est stocké ailleurs
+    const SCRIPT_URL = 'https://raw.githubusercontent.com/Sims07/excelsheet-filler/refs/heads/main/excelsheet-time-filler.js';
 
-  const bookmarkletCode = `
-    javascript:(function(){
-      var s = document.createElement('script');
-      s.src = '${SCRIPT_URL}?t=' + Date.now();
-      document.body.appendChild(s);
-    })();
-  `.replace(/\s+/g, ' ').trim();
-
-  document.getElementById('bookmarkletLink').setAttribute('href', bookmarkletCode);
+    fetch(SCRIPT_URL)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Impossible de charger le fichier source (' + response.status + '). Assurez-vous que le fichier "' + SCRIPT_URL + '" est bien présent dans le même dossier.');
+            }
+            return response.text();
+        })
+        .then(jsCode => {
+            // 1. Nettoyage des commentaires sur une seule ligne (//) pour éviter de corrompre le bookmarklet mis sur une seule ligne
+            const lines = jsCode.split(/\r?\n/);
+            const cleanedLines = lines.map(line => {
+                // Supprime les commentaires // qui ne font pas partie d'une URL (http:// ou https://)
+                return line.replace(/(?<!:)\/\/.*$/, '');
+            });
+            
+            // 2. Reconstruction du code sur une seule ligne
+            const finalJs = cleanedLines.join(' ');
+            
+            // 3. Encapsulation dans l'URL du favori (Bookmarklet) avec encodage
+            const bookmarkletURL = "javascript:(function(){" + encodeURIComponent(finalJs) + "})();";
+            
+            // 4. Mise à jour de l'affichage avec les instructions de drag & drop
+            const area = document.getElementById('action-area');
+            area.innerHTML = `
+                <div class="instructions">
+                    <strong>Script prêt à l'installation :</strong>
+                    <div class="step" style="margin-top: 15px;">
+                        <span class="step-number">1</span> Affichez votre barre des favoris (<code>Ctrl + Maj + B</code> ou <code>Cmd + Maj + B</code>).
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span> <strong>Glissez et déposez</strong> le bouton bleu ci-dessous directement dans votre barre des favoris.
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span> Allez sur votre portail Carto SI et <strong>cliquez sur le favori</strong> pour activer le plein écran !
+                    </div>
+                </div>
+                <div id="btn-container"></div>
+            `;
+            
+            // 5. Création et injection du bouton de favori
+            const btn = document.createElement('a');
+            btn.id = "drag-btn";
+            btn.href = bookmarkletURL;
+            btn.innerText = "🕒 ExcelSheet Time Filler";
+            
+            document.getElementById('btn-container').appendChild(btn);
+        })
+        .catch(err => {
+            document.getElementById('action-area').innerHTML = `
+                <div class="error">
+                    <strong>Erreur de génération :</strong><br>
+                    \${err.message}
+                </div>
+            `;
+        });
 </script>
+
 </body>
 </html>
