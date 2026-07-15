@@ -10,14 +10,14 @@ Ce type d'outil de saisie des temps ne permet généralement pas d'ajouter un bo
 
 ## Installation
 
-1. Ouvre `install.html` dans ton navigateur (ou héberge-le, ex: via GitHub Pages)
+1. Ouvre [`install.html`](.install.html) dans ton navigateur (ou héberge-le, ex: via GitHub Pages)
 2. Glisse le bouton **"ExcelSheet Time Filler"** dans ta barre de favoris
 
 Sinon, en usage ponctuel sans installation :
 
 1. Ouvre ta page de saisie des temps
 2. Ouvre la console développeur (`F12` → onglet Console)
-3. Colle le contenu de [`pwa-time-filler.js`](./pwa-time-filler.js) et valide
+3. Colle le contenu de [`excelsheet-time-filler.js`](./excelsheet-time-filler.js) et valide
 
 ## Utilisation
 
