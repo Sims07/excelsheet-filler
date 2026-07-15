@@ -22,17 +22,22 @@ Sinon, en usage ponctuel sans installation :
 ## Utilisation
 
 1. Sur la page de saisie des temps, lance le bookmarklet
-2. Un panneau flottant apparaît en haut à droite de l'écran
-3. Choisis un template existant dans la liste déroulante, ou crée-en un nouveau :
-   - saisis un nom dans le champ dédié, puis clique sur **"+ Nouveau"**
+2. Un panneau flottant apparaît à l'écran
+3. Choisis un template existant dans la liste déroulante, ou crée-en un nouveau en cliquant sur **"➕ Nouveau"**
 4. Pour chaque ligne du template :
    - **Nom de tâche** : un texte (partiel) qui identifie la tâche dans la grille (ex: `Développement Frontend`) — un champ d'autocomplétion propose les tâches réellement visibles dans la grille
    - **Lun → Ven** : la valeur à saisir ce jour-là (ex: `1j`, `0,5j`), laisser vide pour ne rien saisir
-5. **"+ Ajouter une ligne"** pour compléter le template
-6. **"💾 Enregistrer ce template"** sauvegarde en local (`localStorage`) sous le nom sélectionné
-7. **"▶ Appliquer sur la semaine"** enregistre puis rejoue automatiquement chaque cellule renseignée dans la grille, avec un journal d'exécution en bas du panneau
+5. **"➕ Ajouter une ligne"** pour compléter le template
+6. **Sauvegarde automatique** : Plus besoin de cliquer sur un bouton pour enregistrer ! La sauvegarde dans le `localStorage` est entièrement automatique et instantanée dès que tu modifies un champ. La barre d'état en bas te confirme l'enregistrement en temps réel.
+7. **"▶ Appliquer sur la semaine"** rejoue automatiquement chaque cellule renseignée dans la grille, avec un journal d'exécution en bas du panneau
 8. **"🗑 Supprimer"** retire le template actuellement sélectionné
 9. **"🔄 Tâches"** relit les noms de tâches visibles dans la grille pour mettre à jour l'autocomplétion
+
+### Ergonomie du panneau
+
+* **Drag & Drop fluide** : Glisse le panneau n'importe où en maintenant le clic sur son en-tête bleu. Le positionnement est calculé de manière absolue par rapport à son parent géométrique, évitant tout conflit visuel ou effet de saut avec le CSS de Project Web App (PWA).
+* **Redimensionnement à la souris** : Tu peux ajuster librement la largeur et la hauteur du panneau à l'aide de la poignée striée située dans le coin inférieur droit.
+* **Réduction / Restauration** : Clique sur le bouton de réduction (`—`) situé à gauche de la croix pour masquer temporairement le corps du panneau et libérer ton espace de travail. Clique sur (`＋`) pour le restaurer à sa taille exacte préalablement personnalisée.
 
 > Les colonnes Samedi et Dimanche ne sont pas proposées (jours non travaillés).
 
@@ -44,6 +49,18 @@ Sinon, en usage ponctuel sans installation :
 - Testé sur une grille de type JSGrid (Project Server 2016). Le comportement peut varier selon la version.
 
 ## Changelog
+
+### v0.6.6
+- **Correction définitive du Drag & Drop** : Alignement géométrique absolu basé sur l'`offsetParent` pour éliminer définitivement les décalages et sauts brusques sur PWA / SharePoint.
+- **Ancrage initial automatique** : Fige la position du panneau en coordonnées physiques réelles dès le chargement pour éviter les conflits CSS.
+- **Bouton de réduction de fenêtre** : Ajout d'un bouton de réduction (`—` / `＋`) à gauche de la croix de fermeture pour plier/déplier le panneau.
+- **Mémoire des dimensions** : Conservation et restauration fidèle de la taille personnalisée de l'utilisateur après désactivation de la réduction.
+
+### v0.6.0
+- **Redimensionnement dynamique (Resize)** : Ajout d'une poignée de redimensionnement en bas à droite pour étirer librement le panneau.
+- **Sauvegarde en temps réel (Auto-save)** : Suppression du bouton d'enregistrement manuel. Tout changement est persisté instantanément en tâche de fond.
+- **Bandeau d'état (Status Bar)** : Intégration d'une barre en bas du panneau affichant l'état d'activité, les succès/échecs d'écriture et l'heure de dernière sauvegarde.
+- **Notifications "Toasts"** : Micro-messages de confirmation animés et non-intrusifs à l'écran.
 
 ### v0.3.0
 - Correction du texte devenu invisible au survol de certains boutons

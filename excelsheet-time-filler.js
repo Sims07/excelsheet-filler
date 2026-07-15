@@ -1,23 +1,11 @@
 /* ============================================================
-   Excelsheet Time Filler - v0.3.0
-   Bookmarklet: templates de semaine nommés + remplissage auto
-   de la grille "Mes tâches" de Project Web App (PWA/Project Server).
-
-   Nouveautés v0.3.0 :
-   - Correction du texte invisible au survol des boutons
-   - Autocomplétion du nom de tâche à partir des tâches réellement
-     affichées dans la grille (datalist)
-   - Bouton "🔄 Tâches" pour relire la liste à jour
-
-   Nouveautés v0.2.0 :
-   - Templates nommés (créer / sélectionner / supprimer plusieurs
-     semaines types), sauvegardés en localStorage
-   - Suppression des colonnes Samedi / Dimanche (non travaillés)
-   - Nouvelle charte graphique
-
-   Usage :
-   - Colle tout ce fichier dans la console DevTools de la page
-     Tâches PWA, ou installe-le en bookmarklet (voir install.html).
+   Excelsheet Time Filler - v0.6.6
+   Nouveautés v0.6.6 :
+   - Correction définitive du Drag & Drop grâce à l'alignement géométrique
+     sur l'offsetParent (zéro décalage ou saut sur PWA).
+   - Ancrage initial automatique au chargement pour éviter tout conflit CSS.
+   - Ajout d'un bouton de réduction/restauration (— / ＋) à gauche de la croix.
+   - Sauvegarde et restauration des dimensions personnalisées après réduction.
    ============================================================ */
 
 (function () {
@@ -25,88 +13,272 @@
 
   const STORAGE_KEY = 'pwaTimeFiller_templates_v2';
   const GRID_ID = 'ctl00_ctl00_ctl40_g_59b0a653_1164_47a9_b8c6_ad27fa750537_MyTasksJSGridControl';
-  const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven']; // colonnes 1 à 5 (Sam/Dim exclus)
+  const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
   const CLICK_DELAY = 250;
   const TYPE_DELAY = 200;
   const ROW_DELAY = 500;
 
-  // ---------- Charte graphique ----------
   const COLORS = {
     bg: '#FFFFFF',
     primary: '#0C419A',
     secondary: '#006386',
     text: '#222324',
     surface: '#F9F9F9',
-    surfaceAlt: '#E7ECF5'
+    surfaceAlt: '#E7ECF5',
+    border: '#E2E8F0'
   };
 
-  // ---------- Style du panneau ----------
   const style = document.createElement('style');
   style.textContent = `
     #pwaTimeFillerPanel {
-      position: fixed; top: 20px; right: 20px; width: 600px; max-height: 85vh;
-      overflow-y: auto; background: ${COLORS.bg}; border: 2px solid ${COLORS.primary}; border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25); z-index: 999999;
-      font-family: "Segoe UI", Tahoma, Arial, sans-serif; font-size: 13px; color: ${COLORS.text};
+      position: fixed !important; 
+      top: 20px; 
+      right: 20px; 
+      width: 660px; 
+      height: 480px; 
+      min-width: 500px !important; 
+      max-width: 95vw !important;
+      min-height: 300px !important;
+      max-height: 90vh !important;
+      display: flex !important; 
+      flex-direction: column !important;
+      background: ${COLORS.bg} !important; 
+      border: 1px solid rgba(12, 65, 154, 0.2) !important; 
+      border-radius: 12px !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; 
+      z-index: 999999 !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; 
+      font-size: 13px !important; 
+      color: ${COLORS.text} !important;
+      overflow: hidden !important; 
+      box-sizing: border-box !important;
     }
-    #pwaTimeFillerPanel * { box-sizing: border-box; }
+    #pwaTimeFillerPanel * { box-sizing: border-box !important; }
+    
     #pwaTimeFillerHeader {
-      background: ${COLORS.primary}; color: #fff; padding: 8px 12px; border-radius: 6px 6px 0 0;
-      display: flex; justify-content: space-between; align-items: center; cursor: move;
+      position: relative !important;
+      background: ${COLORS.primary} !important; 
+      color: #fff !important; 
+      padding: 12px 16px !important; 
+      border-radius: 11px 11px 0 0 !important;
+      display: flex !important; 
+      align-items: center !important; 
+      cursor: move !important;
+      flex-shrink: 0 !important;
+      user-select: none !important;
     }
-    #pwaTimeFillerHeader b { font-size: 14px; }
-    #pwaTimeFillerHeader button { background: transparent; border: none; color: #fff; font-size: 16px; cursor: pointer; }
-    #pwaTimeFillerBody { padding: 12px; }
+    #pwaTimeFillerHeader b { 
+      font-size: 14px !important; 
+      font-weight: 600 !important; 
+      padding-right: 80px !important; /* Espace suffisant pour les 2 boutons à droite */
+    }
+    
+    /* Bouton Fermer */
+    #pwaTimeFillerHeader button#pwaTimeFillerClose { 
+      position: absolute !important;
+      top: 50% !important;
+      right: 16px !important;
+      transform: translateY(-50%) !important;
+      width: 24px !important;
+      height: 24px !important;
+      min-width: 24px !important;
+      max-width: 24px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: transparent !important; 
+      border: none !important; 
+      color: #fff !important; 
+      font-size: 16px !important; 
+      font-weight: bold !important;
+      cursor: pointer !important; 
+      padding: 0 !important;
+      margin: 0 !important;
+      opacity: 0.8 !important; 
+      line-height: 1 !important;
+      transition: opacity 0.2s !important; 
+    }
+    #pwaTimeFillerHeader button#pwaTimeFillerClose:hover { opacity: 1 !important; }
+
+    /* Bouton Réduire */
+    #pwaTimeFillerHeader button#pwaTimeFillerMinimize { 
+      position: absolute !important;
+      top: 50% !important;
+      right: 46px !important; /* Positionné à gauche de la croix */
+      transform: translateY(-50%) !important;
+      width: 24px !important;
+      height: 24px !important;
+      min-width: 24px !important;
+      max-width: 24px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: transparent !important; 
+      border: none !important; 
+      color: #fff !important; 
+      font-size: 14px !important; 
+      font-weight: bold !important;
+      cursor: pointer !important; 
+      padding: 0 !important;
+      margin: 0 !important;
+      opacity: 0.8 !important; 
+      line-height: 1 !important;
+      transition: opacity 0.2s !important; 
+    }
+    #pwaTimeFillerHeader button#pwaTimeFillerMinimize:hover { opacity: 1 !important; }
+    
+    #pwaTimeFillerBody { 
+      padding: 16px !important; 
+      position: relative !important; 
+      flex-grow: 1 !important; 
+      display: flex !important; 
+      flex-direction: column !important; 
+      overflow-y: auto !important; 
+    }
 
     .pwaTF-templateBar {
-      display: flex; gap: 6px; align-items: center; margin-bottom: 10px;
-      background: ${COLORS.surfaceAlt}; padding: 8px; border-radius: 6px;
+      display: flex !important; gap: 8px !important; align-items: center !important; margin-bottom: 12px !important;
+      background: ${COLORS.surfaceAlt} !important; padding: 10px !important; border-radius: 8px !important;
+      flex-shrink: 0 !important;
     }
     .pwaTF-templateBar select {
-      flex: 1; padding: 5px; border: 1px solid ${COLORS.primary}; border-radius: 4px; background: ${COLORS.bg}; color: ${COLORS.text};
+      flex: 1 !important; height: 36px !important; padding: 0 10px !important; border: 1px solid #ced4da !important; 
+      border-radius: 6px !important; background: ${COLORS.bg} !important; color: ${COLORS.text} !important;
+      font-size: 13px !important; cursor: pointer !important; outline: none !important;
     }
-    .pwaTF-templateBar input[type=text] {
-      flex: 1; padding: 5px; border: 1px solid ${COLORS.primary}; border-radius: 4px; color: ${COLORS.text};
-    }
+    
     .pwaTF-templateBar button {
-      border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+      height: 36px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+      gap: 6px !important; padding: 0 12px !important; border-radius: 6px !important; font-size: 13px !important; font-weight: 600 !important; 
+      cursor: pointer !important; transition: all 0.2s ease !important; border: none !important;
     }
-    .pwaTF-btnNew { background: ${COLORS.secondary}; color: #fff !important; }
-    .pwaTF-btnNew:hover { background: #004a66; color: #fff !important; }
-    .pwaTF-btnDelete { background: #F9F9F9; color: #B00020 !important; border: 1px solid #B00020 !important; }
-    .pwaTF-btnDelete:hover { background: #fbeaea; color: #B00020 !important; }
-    .pwaTF-btnRefresh { background: ${COLORS.surface}; color: ${COLORS.text} !important; border: 1px solid ${COLORS.primary} !important; }
-    .pwaTF-btnRefresh:hover { background: ${COLORS.surfaceAlt}; color: ${COLORS.text} !important; }
+    
+    .pwaTF-btnNew { background: ${COLORS.secondary} !important; color: #fff !important; }
+    .pwaTF-btnNew:hover { background: #004a66 !important; transform: translateY(-1px) !important; }
+    
+    .pwaTF-btnDelete { 
+      background: #FFFFFF !important; color: #B00020 !important; 
+      border: 1px solid #e0b6bc !important; 
+    }
+    .pwaTF-btnDelete:hover { background: #fbeaea !important; border-color: #B00020 !important; }
+    
+    .pwaTF-btnRefresh { 
+      background: #FFFFFF !important; color: ${COLORS.text} !important; 
+      border: 1px solid #ced4da !important; 
+    }
+    .pwaTF-btnRefresh:hover { background: ${COLORS.surface} !important; border-color: ${COLORS.primary} !important; }
 
-    #pwaTimeFillerTable { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-    #pwaTimeFillerTable th, #pwaTimeFillerTable td { border: 1px solid ${COLORS.surfaceAlt}; padding: 3px; }
-    #pwaTimeFillerTable th { background: ${COLORS.surface}; font-weight: 600; font-size: 12px; color: ${COLORS.text}; }
-    #pwaTimeFillerTable td { background: ${COLORS.bg}; }
+    .pwaTimeFillerTableContainer {
+      flex-grow: 1 !important;
+      overflow-x: hidden !important;
+      overflow-y: visible !important; 
+      margin: 12px 0 !important;
+    }
+    #pwaTimeFillerTable { 
+      width: 100% !important; 
+      border-collapse: collapse !important; 
+      table-layout: fixed !important; 
+    }
+    #pwaTimeFillerTable th { 
+      background: #F9F9F9 !important; font-weight: 600 !important; font-size: 12px !important; color: ${COLORS.text} !important; 
+      padding: 8px !important; text-align: left !important; border-bottom: 2px solid ${COLORS.surfaceAlt} !important;
+    }
+    #pwaTimeFillerTable td { padding: 6px 4px !important; border-bottom: 1px solid ${COLORS.surfaceAlt} !important; vertical-align: middle !important; }
+    
     #pwaTimeFillerTable input[type=text] {
-      width: 100%; border: 1px solid ${COLORS.surfaceAlt}; padding: 3px; font-size: 12px; color: ${COLORS.text}; border-radius: 3px;
+      height: 30px !important; border: 1px solid #e0e0e0 !important; padding: 0 8px !important; font-size: 12px !important; 
+      color: ${COLORS.text} !important; border-radius: 4px !important; transition: border-color 0.2s, box-shadow 0.2s !important;
     }
-    #pwaTimeFillerTable input[type=text]:focus { outline: none; border-color: ${COLORS.primary}; box-shadow: 0 0 0 1px ${COLORS.primary}; }
-    #pwaTimeFillerTable input.taskInput { min-width: 200px; }
-    #pwaTimeFillerTable input.dayInput { width: 52px; text-align: center; }
-    #pwaTimeFillerTable td.rmCell { text-align: center; }
-    #pwaTimeFillerTable td.rmCell button { color: #B00020; border: none; background: transparent; cursor: pointer; font-weight: bold; }
+    #pwaTimeFillerTable input[type=text]:focus { 
+      outline: none !important; border-color: ${COLORS.primary} !important; background-color: #fff !important;
+      box-shadow: 0 0 0 2px rgba(12, 65, 154, 0.15) !important; 
+    }
+    #pwaTimeFillerTable input.taskInput { width: 100% !important; }
+    #pwaTimeFillerTable input.dayInput { width: 100% !important; text-align: center !important; font-weight: 600 !important; background-color: #fafafa !important; }
+    
+    .col-delete { width: 36px !important; text-align: center !important; }
+    #pwaTimeFillerTable td.rmCell { 
+      text-align: center !important; 
+      width: 36px !important; 
+      padding: 0 !important;
+    }
+    
+    #pwaTimeFillerTable td.rmCell button { 
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 24px !important;
+      height: 24px !important;
+      min-width: 24px !important;
+      max-width: 24px !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      color: #B00020 !important; 
+      border: none !important; 
+      background: transparent !important; 
+      cursor: pointer !important; 
+      font-size: 18px !important; 
+      font-weight: bold !important; 
+      line-height: 1 !important;
+      opacity: 0.6 !important;
+      transition: opacity 0.2s, transform 0.1s !important;
+    }
+    #pwaTimeFillerTable td.rmCell button:hover { 
+      opacity: 1 !important; 
+      transform: scale(1.15) !important;
+    }
 
-    .pwaTimeFillerBtnRow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .pwaTimeFillerBtnRow { display: flex !important; gap: 10px !important; margin-top: auto !important; justify-content: space-between !important; flex-shrink: 0 !important; }
     .pwaTimeFillerBtnRow button {
-      padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;
+      height: 38px !important; padding: 0 16px !important; border: none !important; border-radius: 6px !important; cursor: pointer !important; 
+      font-size: 13px !important; font-weight: 600 !important; transition: all 0.2s ease !important;
+      display: inline-flex !important; align-items: center !important; gap: 8px !important;
     }
-    .btnAdd { background: ${COLORS.surface}; color: ${COLORS.text} !important; border: 1px solid ${COLORS.surfaceAlt} !important; }
-    .btnAdd:hover { background: ${COLORS.surfaceAlt}; color: ${COLORS.text} !important; }
-    .btnSave { background: ${COLORS.primary}; color: #fff !important; }
-    .btnSave:hover { background: #08316f; color: #fff !important; }
-    .btnApply { background: ${COLORS.secondary}; color: #fff !important; }
-    .btnApply:hover { background: #004a66; color: #fff !important; }
+    
+    .btnAdd { background: #F9F9F9 !important; color: ${COLORS.text} !important; border: 1px solid #ced4da !important; }
+    .btnAdd:hover { background: ${COLORS.surfaceAlt} !important; border-color: ${COLORS.primary} !important; }
+    
+    .btnApply { 
+      background: ${COLORS.secondary} !important; color: #fff !important; 
+      box-shadow: 0 2px 6px rgba(0, 99, 134, 0.2) !important; margin-left: auto !important;
+    }
+    .btnApply:hover { 
+      background: #004a66 !important; 
+      box-shadow: 0 4px 12px rgba(0, 99, 134, 0.3) !important; 
+      transform: translateY(-1px) !important; 
+    }
 
-    #pwaTimeFillerLog {
-      margin-top: 10px; background: ${COLORS.surface}; border: 1px solid ${COLORS.surfaceAlt}; border-radius: 4px;
-      padding: 6px 8px; max-height: 140px; overflow-y: auto; font-family: Consolas, monospace; font-size: 11px;
-      white-space: pre-wrap; color: ${COLORS.text};
+    #pwaTimeFillerStatusBar {
+      background: #F1F5F9 !important; border-top: 1px solid ${COLORS.border} !important;
+      padding: 8px 16px !important; border-radius: 0 0 11px 11px !important;
+      font-size: 11px !important; color: #64748B !important; font-weight: 500 !important;
+      display: flex !important; align-items: center !important; justify-content: space-between !important;
+      flex-shrink: 0 !important;
+      position: relative !important;
     }
+
+    /* Poignée de redimensionnement */
+    .pwaTF-resize-handle {
+      position: absolute !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 14px !important;
+      height: 14px !important;
+      cursor: se-resize !important;
+      background: linear-gradient(135deg, transparent 40%, #64748B 40%, #64748B 60%, transparent 60%, transparent 80%, #64748B 80%) !important;
+      background-size: 4px 4px !important;
+      border-bottom-right-radius: 11px !important;
+      z-index: 1000000 !important;
+    }
+
+    .pwaTF-toast {
+      position: absolute !important; bottom: 70px !important; left: 50% !important; transform: translateX(-50%) !important;
+      background: rgba(15, 23, 42, 0.9) !important; color: #FFF !important; padding: 8px 16px !important;
+      border-radius: 20px !important; font-size: 12px !important; font-weight: 500 !important; pointer-events: none !important;
+      opacity: 0 !important; transition: opacity 0.3s, transform 0.3s !important; z-index: 10000 !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    }
+    .pwaTF-toast.show { opacity: 1 !important; transform: translate(-50%, -5px) !important; }
   `;
   document.head.appendChild(style);
 
@@ -116,51 +288,63 @@
   panel.innerHTML = `
     <div id="pwaTimeFillerHeader">
       <b>PWA Time Filler — Templates de semaine</b>
+      <button id="pwaTimeFillerMinimize" title="Réduire">—</button>
       <button id="pwaTimeFillerClose" title="Fermer">✕</button>
     </div>
     <div id="pwaTimeFillerBody">
+      <div id="pwaTF-toastContainer" class="pwaTF-toast"></div>
 
       <div class="pwaTF-templateBar">
         <select id="pwaTF-select"></select>
-        <input type="text" id="pwaTF-newName" placeholder="Nom du nouveau template">
-        <button class="pwaTF-btnNew" id="pwaTF-btnNew">+ Nouveau</button>
-        <button class="pwaTF-btnDelete" id="pwaTF-btnDelete">🗑 Supprimer</button>
-        <button class="pwaTF-btnRefresh" id="pwaTF-btnRefresh" title="Relire les noms de tâches visibles dans la grille">🔄 Tâches</button>
+        <button class="pwaTF-btnNew" id="pwaTF-btnNew">➕ Nouveau</button>
+        <button class="pwaTF-btnDelete" id="pwaTF-btnDelete" title="Supprimer ce template">🗑 Supprimer</button>
+        <button class="pwaTF-btnRefresh" id="pwaTF-btnRefresh" title="Relire les noms de tâches visibles">🔄 Tâches</button>
       </div>
       <datalist id="pwaTF-taskList"></datalist>
 
-      <table id="pwaTimeFillerTable">
-        <thead>
-          <tr>
-            <th>Nom de tâche (texte recherché)</th>
-            ${DAY_LABELS.map(d => `<th>${d}</th>`).join('')}
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="pwaTimeFillerRows"></tbody>
-      </table>
-
-      <div class="pwaTimeFillerBtnRow">
-        <button class="btnAdd" id="btnAddRow">+ Ajouter une ligne</button>
-        <button class="btnSave" id="btnSaveTemplate">💾 Enregistrer ce template</button>
-        <button class="btnApply" id="btnApplyWeek">▶ Appliquer sur la semaine</button>
+      <div class="pwaTimeFillerTableContainer">
+        <table id="pwaTimeFillerTable">
+          <thead>
+            <tr>
+              <th style="width: auto;">Nom de tâche (texte recherché)</th>
+              ${DAY_LABELS.map(d => `<th style="text-align: center; width: 62px;">${d}</th>`).join('')}
+              <th class="col-delete"></th>
+            </tr>
+          </thead>
+          <tbody id="pwaTimeFillerRows"></tbody>
+        </table>
       </div>
 
-      <div id="pwaTimeFillerLog"></div>
+      <div class="pwaTimeFillerBtnRow">
+        <button class="btnAdd" id="btnAddRow">➕ Ajouter une ligne</button>
+        <button class="btnApply" id="btnApplyWeek">▶ Appliquer sur la semaine</button>
+      </div>
+    </div>
+    <div id="pwaTimeFillerStatusBar">
+      <span id="pwaStatusText">🟢 Prêt</span>
+      <span id="pwaStatusSub">Dernière sauvegarde : auto</span>
+      <div class="pwaTF-resize-handle" id="pwaTFResizeHandle"></div>
     </div>
   `;
   document.body.appendChild(panel);
 
   const rowsBody = panel.querySelector('#pwaTimeFillerRows');
-  const logBox = panel.querySelector('#pwaTimeFillerLog');
   const selectEl = panel.querySelector('#pwaTF-select');
-  const newNameEl = panel.querySelector('#pwaTF-newName');
+  const statusText = panel.querySelector('#pwaStatusText');
+  const statusSub = panel.querySelector('#pwaStatusSub');
+  const toastEl = panel.querySelector('#pwaTF-toastContainer');
 
-  function log(msg) {
-    const line = document.createElement('div');
-    line.textContent = msg;
-    logBox.appendChild(line);
-    logBox.scrollTop = logBox.scrollHeight;
+  function setStatus(text, subText = 'Sauvegarde automatique active') {
+    statusText.textContent = text;
+    if (subText) statusSub.textContent = subText;
+  }
+
+  function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('show');
+    setTimeout(() => {
+      toastEl.classList.remove('show');
+    }, 2200);
   }
 
   function escapeHtml(s) {
@@ -172,11 +356,20 @@
     data = data || { task: '', days: DAY_LABELS.map(() => '') };
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" class="taskInput" list="pwaTF-taskList" placeholder="ex: Développement Frontend" value="${escapeHtml(data.task)}"></td>
+      <td><input type="text" class="taskInput" list="pwaTF-taskList" placeholder="ex: Développement..." value="${escapeHtml(data.task)}"></td>
       ${data.days.map(v => `<td><input type="text" class="dayInput" value="${escapeHtml(v)}" placeholder="1j"></td>`).join('')}
-      <td class="rmCell"><button title="Supprimer la ligne">✕</button></td>
+      <td class="rmCell"><button title="Supprimer la ligne">&times;</button></td>
     `;
-    tr.querySelector('.rmCell button').addEventListener('click', () => tr.remove());
+    
+    tr.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', triggerAutoSave);
+    });
+    
+    tr.querySelector('.rmCell button').addEventListener('click', () => {
+      tr.remove();
+      triggerAutoSave();
+    });
+    
     rowsBody.appendChild(tr);
   }
 
@@ -185,7 +378,9 @@
     rowsBody.querySelectorAll('tr').forEach(tr => {
       const task = tr.querySelector('.taskInput').value.trim();
       const days = Array.from(tr.querySelectorAll('.dayInput')).map(i => i.value.trim());
-      if (task) rows.push({ task, days });
+      if (task || days.some(d => d !== '')) {
+        rows.push({ task, days });
+      }
     });
     return rows;
   }
@@ -222,36 +417,48 @@
     return selectEl.value || null;
   }
 
-  function saveCurrentTemplate() {
-    const name = currentTemplateName();
-    if (!name) { log('⚠ Aucun template sélectionné. Crée-en un d’abord avec "+ Nouveau".'); return; }
-    const store = loadStore();
-    store.templates[name] = getRowsFromUI();
-    store.lastUsed = name;
-    saveStore(store);
-    log('✅ Template "' + name + '" enregistré (' + store.templates[name].length + ' ligne(s)).');
+  let autoSaveTimeout;
+  function triggerAutoSave() {
+    clearTimeout(autoSaveTimeout);
+    setStatus('✍️ Saisie en cours...');
+    autoSaveTimeout = setTimeout(() => {
+      const name = currentTemplateName();
+      if (!name) return;
+      const store = loadStore();
+      store.templates[name] = getRowsFromUI();
+      saveStore(store);
+      
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setStatus('🟢 Prêt', `Modifié à ${now}`);
+    }, 500);
   }
 
   function createNewTemplate() {
-    const name = newNameEl.value.trim();
-    if (!name) { log('⚠ Donne un nom au nouveau template.'); return; }
+    const name = prompt('Nom du nouveau template :');
+    if (name === null) return;
+    const trimmedName = name.trim();
+    if (!trimmedName) { alert('Le nom du template ne peut pas être vide.'); return; }
+    
     const store = loadStore();
-    if (store.templates[name]) {
-      if (!confirm('Un template "' + name + '" existe déjà. L’écraser ?')) return;
+    if (store.templates[trimmedName]) {
+      showToast('⚠️ Ce template existe déjà.');
+      selectEl.value = trimmedName;
+      loadRowsIntoUI(store.templates[trimmedName]);
+      return;
     }
-    const currentRows = getRowsFromUI();
-    store.templates[name] = currentRows.length ? currentRows : [{ task: '', days: DAY_LABELS.map(() => '') }];
-    store.lastUsed = name;
+    
+    store.templates[trimmedName] = [{ task: '', days: DAY_LABELS.map(() => '') }];
+    store.lastUsed = trimmedName;
     saveStore(store);
-    refreshSelect(store, name);
-    newNameEl.value = '';
-    log('✅ Template "' + name + '" créé.');
+    refreshSelect(store, trimmedName);
+    loadRowsIntoUI(store.templates[trimmedName]);
+    showToast(`📂 "${trimmedName}" créé !`);
   }
 
   function deleteCurrentTemplate() {
     const name = currentTemplateName();
-    if (!name) { log('⚠ Aucun template à supprimer.'); return; }
-    if (!confirm('Supprimer le template "' + name + '" ?')) return;
+    if (!name) return;
+    if (!confirm(`Supprimer le template "${name}" ?`)) return;
     const store = loadStore();
     delete store.templates[name];
     store.lastUsed = Object.keys(store.templates)[0] || null;
@@ -262,7 +469,7 @@
     } else {
       loadRowsIntoUI(null);
     }
-    log('🗑 Template "' + name + '" supprimé.');
+    showToast(`🗑️ "${name}" supprimé`);
   }
 
   selectEl.addEventListener('change', () => {
@@ -272,27 +479,30 @@
       loadRowsIntoUI(store.templates[name]);
       store.lastUsed = name;
       saveStore(store);
-      log('📂 Template "' + name + '" chargé.');
+      showToast(`📂 "${name}" chargé`);
     }
   });
 
   panel.querySelector('#pwaTF-btnNew').addEventListener('click', createNewTemplate);
   panel.querySelector('#pwaTF-btnDelete').addEventListener('click', deleteCurrentTemplate);
-  panel.querySelector('#btnSaveTemplate').addEventListener('click', saveCurrentTemplate);
-  panel.querySelector('#btnAddRow').addEventListener('click', () => addRow());
+  panel.querySelector('#btnAddRow').addEventListener('click', () => {
+    addRow();
+    triggerAutoSave();
+  });
 
   // ---------- Autocomplétion des noms de tâches ----------
   const taskListEl = panel.querySelector('#pwaTF-taskList');
 
   function scanTaskNames() {
     const leftTable = document.getElementById(GRID_ID + '_leftpane_mainTable');
-    if (!leftTable) { log('⚠ Grille introuvable, impossible de lire les tâches.'); return; }
+    if (!leftTable) {
+      setStatus('⚠️ Erreur', 'Grille introuvable');
+      return;
+    }
     const leftRows = Array.from(leftTable.querySelector('tbody').children);
     const names = new Set();
 
     leftRows.forEach(row => {
-      // Les vraies lignes de tâche sont au niveau hiérarchique 3 (aria-level="3")
-      // les niveaux 1 et 2 sont des en-têtes de projet / de regroupement.
       if (row.getAttribute('aria-level') !== '3') return;
       const link = row.querySelector('a');
       if (link) {
@@ -306,7 +516,7 @@
       .map(n => `<option value="${escapeHtml(n)}"></option>`)
       .join('');
 
-    log('🔄 ' + names.size + ' tâche(s) lue(s) dans la grille pour l’autocomplétion.');
+    showToast(`🔄 ${names.size} tâches synchronisées`);
   }
 
   panel.querySelector('#pwaTF-btnRefresh').addEventListener('click', scanTaskNames);
@@ -342,7 +552,7 @@
   function fillCell(rowIndex, dayCol, value) {
     return new Promise((resolve, reject) => {
       const cell = getCell(rowIndex, dayCol);
-      if (!cell) { reject('Cellule introuvable (ligne ' + rowIndex + ', col ' + dayCol + ')'); return; }
+      if (!cell) { reject('Cellule introuvable'); return; }
       cell.scrollIntoView({ block: 'center' });
 
       clickCell(cell);
@@ -383,16 +593,18 @@
 
   async function applyWeek() {
     const rows = getRowsFromUI();
-    if (!rows.length) { log('⚠ Aucune ligne à appliquer.'); return; }
+    if (!rows.length) { showToast('⚠️ Aucune ligne à saisir'); return; }
 
-    saveCurrentTemplate();
-    log('▶ Démarrage de l’application du template (' + rows.length + ' ligne(s))...');
+    const applyBtn = panel.querySelector('#btnApplyWeek');
+    applyBtn.disabled = true;
+    applyBtn.style.opacity = '0.5';
+
+    setStatus('⚡ Remplissage en cours...', 'Veuillez ne pas toucher à la page');
     let ok = 0, fail = 0;
 
     for (const row of rows) {
       const rowIndex = findRowIndex(row.task);
       if (rowIndex === -1) {
-        log('✗ Tâche introuvable : "' + row.task + '" (vérifie qu’elle est bien visible dans la grille)');
         fail++;
         continue;
       }
@@ -400,39 +612,143 @@
         const val = row.days[dayCol - 1];
         if (!val) continue;
         try {
+          setStatus(`⚡ Écriture : ${row.task.substring(0, 20)}... (${DAY_LABELS[dayCol - 1]})`);
           await fillCell(rowIndex, dayCol, val);
-          log('✓ ' + row.task + ' — ' + DAY_LABELS[dayCol - 1] + ' = ' + val);
           ok++;
         } catch (e) {
-          log('✗ Erreur sur ' + row.task + ' / ' + DAY_LABELS[dayCol - 1] + ' : ' + e);
           fail++;
         }
         await new Promise(r => setTimeout(r, ROW_DELAY));
       }
     }
-    log('🏁 Terminé : ' + ok + ' cellule(s) remplie(s), ' + fail + ' erreur(s).');
+    
+    applyBtn.disabled = false;
+    applyBtn.style.opacity = '1';
+    
+    setStatus('🟢 Prêt', `Dernier run : ${ok} ok, ${fail} échec(s)`);
+    showToast('🏁 Saisie automatique terminée !');
   }
 
   panel.querySelector('#btnApplyWeek').addEventListener('click', applyWeek);
   panel.querySelector('#pwaTimeFillerClose').addEventListener('click', () => panel.remove());
 
-  // ---------- Drag du panneau ----------
+  // ---------- Fonctionnalité Réduire / Agrandir ----------
+  let isMinimized = false;
+  let preMinimizeHeight = '480px';
+
+  function toggleMinimize() {
+    const body = panel.querySelector('#pwaTimeFillerBody');
+    const statusBar = panel.querySelector('#pwaTimeFillerStatusBar');
+    const minimizeBtn = panel.querySelector('#pwaTimeFillerMinimize');
+    
+    isMinimized = !isMinimized;
+    
+    if (isMinimized) {
+      const rect = panel.getBoundingClientRect();
+      preMinimizeHeight = rect.height + 'px';
+      
+      body.style.setProperty('display', 'none', 'important');
+      statusBar.style.setProperty('display', 'none', 'important');
+      panel.style.setProperty('height', 'auto', 'important');
+      panel.style.setProperty('min-height', 'auto', 'important');
+      
+      minimizeBtn.innerHTML = '＋';
+      minimizeBtn.title = 'Agrandir';
+    } else {
+      body.style.setProperty('display', 'flex', 'important');
+      statusBar.style.setProperty('display', 'flex', 'important');
+      panel.style.setProperty('height', preMinimizeHeight, 'important');
+      panel.style.setProperty('min-height', '300px', 'important');
+      
+      minimizeBtn.innerHTML = '—';
+      minimizeBtn.title = 'Réduire';
+    }
+  }
+
+  panel.querySelector('#pwaTimeFillerMinimize').addEventListener('click', toggleMinimize);
+
+  // ---------- Drag & Drop du panneau (Sécurisé et Fluide) ----------
   (function makeDraggable() {
     const header = panel.querySelector('#pwaTimeFillerHeader');
-    let dragging = false, offsetX = 0, offsetY = 0;
+    let dragging = false;
+    let startX = 0, startY = 0;
+    let currentLeft = 0, currentTop = 0;
+
     header.addEventListener('mousedown', e => {
-      if (e.target.tagName === 'BUTTON') return;
+      // Ignorer si on clique sur un bouton dans le header (fermer / réduire)
+      if (e.target.closest('button')) return;
+      
       dragging = true;
-      offsetX = e.clientX - panel.offsetLeft;
-      offsetY = e.clientY - panel.offsetTop;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      // Coordonnées absolues dans le référentiel de l'offsetParent
+      const rect = panel.getBoundingClientRect();
+      currentLeft = rect.left;
+      currentTop = rect.top;
+      
+      const offsetParent = panel.offsetParent;
+      if (offsetParent) {
+        const parentRect = offsetParent.getBoundingClientRect();
+        currentLeft -= parentRect.left;
+        currentTop -= parentRect.top;
+      }
+      
+      e.preventDefault();
     });
+
     document.addEventListener('mousemove', e => {
       if (!dragging) return;
-      panel.style.left = (e.clientX - offsetX) + 'px';
-      panel.style.top = (e.clientY - offsetY) + 'px';
-      panel.style.right = 'auto';
+      
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      panel.style.setProperty('left', (currentLeft + deltaX) + 'px', 'important');
+      panel.style.setProperty('top', (currentTop + deltaY) + 'px', 'important');
+      panel.style.setProperty('right', 'auto', 'important');
     });
-    document.addEventListener('mouseup', () => dragging = false);
+
+    document.addEventListener('mouseup', () => {
+      dragging = false;
+    });
+  })();
+
+  // ---------- Redimensionnement dynamique (JS Resize) ----------
+  (function makeResizable() {
+    const handle = panel.querySelector('#pwaTFResizeHandle');
+    let resizing = false;
+    let startWidth = 0, startHeight = 0;
+    let startX = 0, startY = 0;
+
+    handle.addEventListener('mousedown', e => {
+      resizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = panel.getBoundingClientRect();
+      startWidth = rect.width;
+      startHeight = rect.height;
+      
+      e.preventDefault();
+      e.stopPropagation(); // Évite de déplacer la fenêtre en redimensionnant
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!resizing) return;
+      
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      const newWidth = Math.max(500, startWidth + deltaX);
+      const newHeight = Math.max(300, startHeight + deltaY);
+      
+      panel.style.setProperty('width', newWidth + 'px', 'important');
+      panel.style.setProperty('height', newHeight + 'px', 'important');
+    });
+
+    document.addEventListener('mouseup', () => {
+      resizing = false;
+    });
   })();
 
   // ---------- Initialisation ----------
@@ -445,6 +761,12 @@
   refreshSelect(initialStore, initialStore.lastUsed);
   loadRowsIntoUI(initialStore.templates[initialStore.lastUsed] || initialStore.templates[Object.keys(initialStore.templates)[0]]);
   scanTaskNames();
-  log('Panneau chargé. Sélectionne ou crée un template, puis "Appliquer sur la semaine".');
+
+  // FIXATION INITIALE : On force le panneau en coordonnées physiques absolues dès le premier affichage.
+  // Cela empêche tout effet de saut/latence au tout premier Drag ou Resize.
+  const initialRect = panel.getBoundingClientRect();
+  panel.style.setProperty('left', initialRect.left + 'px', 'important');
+  panel.style.setProperty('top', initialRect.top + 'px', 'important');
+  panel.style.setProperty('right', 'auto', 'important');
 
 })();
