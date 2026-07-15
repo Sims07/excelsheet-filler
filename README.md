@@ -10,7 +10,7 @@ PWA ne permet pas d'ajouter un bouton ou un raccourci natif dans son interface d
 
 ## Installation
 
-1. Ouvre `install.html` dans ton navigateur (ou héberge-le, ex: via GitHub Pages)
+1. Ouvre [`install.html`](./install.html)` dans ton navigateur (ou héberge-le, ex: via GitHub Pages)
 2. Glisse le bouton **"PWA Time Filler"** dans ta barre de favoris
 
 Sinon, en usage ponctuel sans installation :
