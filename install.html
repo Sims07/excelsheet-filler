@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExcelSheet Time Filler — Installation</title>
+<style>
+  :root {
+    --blue: #2a8dd4;
+    --green: #27ae60;
+    --bg: #f7f9fb;
+    --border: #ddd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    background: var(--bg);
+    color: #222;
+    margin: 0;
+    padding: 40px 20px;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px 36px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  h1 {
+    font-size: 22px;
+    margin-top: 0;
+    color: var(--blue);
+  }
+  h2 {
+    font-size: 16px;
+    margin-top: 32px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  p { font-size: 14px; }
+  .bookmarklet-box {
+    background: var(--bg);
+    border: 1px dashed var(--blue);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+  }
+  .bookmarklet-btn {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff !important;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 6px;
+    cursor: grab;
+    user-select: none;
+  }
+  .bookmarklet-btn:active { cursor: grabbing; }
+  .hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 10px;
+  }
+  ol, ul { font-size: 14px; padding-left: 20px; }
+  code {
+    background: #eee;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .version-tag {
+    display: inline-block;
+    background: var(--green);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  footer {
+    margin-top: 32px;
+    font-size: 12px;
+    color: #999;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🕒 ExcelSheet Time Filler <span class="version-tag">v0.1.0</span></h1>
+    <p>
+      Remplit automatiquement la grille de saisie des temps de Project Web App (PWA)
+      à partir d'un template de semaine que tu définis une seule fois.
+    </p>
+
+    <h2>1. Installer le bookmarklet</h2>
+    <p>Glisse le bouton ci-dessous dans ta barre de favoris (affiche-la avec <code>Ctrl+Maj+B</code> si besoin) :</p>
+
+    <div class="bookmarklet-box">
+      <a class="bookmarklet-btn" id="bookmarkletLink" href="#" draggable="true">📌 ExcelSheet Time Filler</a>
+      <div class="hint">Glisser-déposer ce bouton dans la barre de favoris de ton navigateur</div>
+    </div>
+
+    <h2>2. Utiliser l'outil</h2>
+    <ol>
+      <li>Va sur ta page <strong>Tâches</strong> dans ExcelSheet</li>
+      <li>Clique sur le favori <strong>ExcelSheet Time Filler</strong> installé à l'étape 1</li>
+      <li>Un panneau flottant apparaît : renseigne tes lignes (tâche + valeur par jour)</li>
+      <li>Clique sur <strong>« 💾 Enregistrer le template »</strong> pour le sauvegarder localement</li>
+      <li>Clique sur <strong>« ▶ Appliquer sur la semaine »</strong> pour lancer le remplissage automatique</li>
+    </ol>
+
+    <h2>Alternative sans installation</h2>
+    <p>
+      Tu peux aussi coller directement le contenu de
+      <code>pwa-time-filler.js</code> dans la console développeur (<code>F12</code>)
+      de la page Tâches ExcelSheet, sans passer par le favori.
+    </p>
+
+    <h2>Notes</h2>
+    <ul>
+      <li>Le template est sauvegardé dans le <code>localStorage</code> de ton navigateur : il reste disponible tant que tu ne vides pas les données du site.</li>
+      <li>Les tâches à remplir doivent être visibles dans la grille (pas de groupe replié) au moment de l'exécution.</li>
+    </ul>
+
+    <footer>
+      PWA Time Filler — code source sur
+      <a href="https://github.com/Sims07/pwa-time-filler" target="_blank">GitHub</a>
+    </footer>
+  </div>
+
+<script>
+  // Charge dynamiquement la dernière version du script depuis GitHub (raw)
+  // à ajuster si le nom du repo ou la branche diffère.
+  const SCRIPT_URL = 'https://raw.githubusercontent.com/Sims07/pwa-time-filler/main/pwa-time-filler.js';
+
+  const bookmarkletCode = `
+    javascript:(function(){
+      var s = document.createElement('script');
+      s.src = '${SCRIPT_URL}?t=' + Date.now();
+      document.body.appendChild(s);
+    })();
+  `.replace(/\s+/g, ' ').trim();
+
+  document.getElementById('bookmarkletLink').setAttribute('href', bookmarkletCode);
+</script>
+</body>
+</html>
