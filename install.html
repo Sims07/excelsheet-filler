@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Installateur - Excelsheet Filler</title>
+    <title>Installateur - Visionneuse Carto SI</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -109,47 +109,18 @@
     </style>
 </head>
 <body>
+
 <div class="container">
-    <h1>🕒 ExcelSheet Time Filler <span class="version-tag">v0.1.0</span></h1>
-    <p>
-      Remplit automatiquement la grille de saisie des temps de Project Web App (PWA)
-      à partir d'un template de semaine que tu définis une seule fois.
-    </p>
-
-    <h2>1. Installer le bookmarklet</h2>
-    <p>Glisse le bouton ci-dessous dans ta barre de favoris (affiche-la avec <code>Ctrl+Maj+B</code> si besoin) :</p>
-
-    <div class="bookmarklet-box">
-      <a class="bookmarklet-btn" id="bookmarkletLink" href="#" draggable="true">📌 ExcelSheet Time Filler</a>
-      <div class="hint">Glisser-déposer ce bouton dans la barre de favoris de ton navigateur</div>
+    <h2>🕒 ExcelSheet Time Filler</h2>
+    <p>Générez votre favori interactif de manière dynamique à partir de la dernière version du code source.</p>
+    
+    <div id="action-area">
+        <div class="loading">Chargement et empaquetage du script en cours...</div>
     </div>
 
-    <h2>2. Utiliser l'outil</h2>
-    <ol>
-      <li>Va sur ta page <strong>Tâches</strong> dans ExcelSheet</li>
-      <li>Clique sur le favori <strong>ExcelSheet Time Filler</strong> installé à l'étape 1</li>
-      <li>Un panneau flottant apparaît : renseigne tes lignes (tâche + valeur par jour)</li>
-      <li>Clique sur <strong>« 💾 Enregistrer le template »</strong> pour le sauvegarder localement</li>
-      <li>Clique sur <strong>« ▶ Appliquer sur la semaine »</strong> pour lancer le remplissage automatique</li>
-    </ol>
-
-    <h2>Alternative sans installation</h2>
-    <p>
-      Tu peux aussi coller directement le contenu de
-      <code>pwa-time-filler.js</code> dans la console développeur (<code>F12</code>)
-      de la page Tâches ExcelSheet, sans passer par le favori.
-    </p>
-
-    <h2>Notes</h2>
-    <ul>
-      <li>Le template est sauvegardé dans le <code>localStorage</code> de ton navigateur : il reste disponible tant que tu ne vides pas les données du site.</li>
-      <li>Les tâches à remplir doivent être visibles dans la grille (pas de groupe replié) au moment de l'exécution.</li>
-    </ul>
-
-    <footer>
-      PWA Time Filler — code source sur
-      <a href="https://github.com/Sims07/pwa-time-filler" target="_blank">GitHub</a>
-    </footer>
+    <div class="footer">
+        Développé pour les Architectes Solution. Version Plein Écran persistante avec synchronisation dynamique des Image Maps cliquables.
+    </div>
 </div>
 
 <script>
@@ -200,7 +171,7 @@
             const btn = document.createElement('a');
             btn.id = "drag-btn";
             btn.href = bookmarkletURL;
-            btn.innerText = "👁️ Visionneuse Carto SI";
+            btn.innerText = "🕒 ExcelSheet Time Filler";
             
             document.getElementById('btn-container').appendChild(btn);
         })
@@ -216,4 +187,3 @@
 
 </body>
 </html>
-
