@@ -17,7 +17,7 @@ Sinon, en usage ponctuel sans installation :
 
 1. Ouvre ta page **Tâches** dans PWA
 2. Ouvre la console développeur (`F12` → onglet Console)
-3. Colle le contenu de [`pwa-time-filler.js`](./pwa-time-filler.js) et valide
+3. Colle le contenu de [`excelsheet-time-filler.js`](./excelsheet-time-filler.js) et valide
 
 ## Utilisation
 
