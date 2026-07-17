@@ -1,11 +1,11 @@
 /* ============================================================
-   Excelsheet Time Filler - v0.6.6
-   Nouveautés v0.6.6 :
-   - Correction définitive du Drag & Drop grâce à l'alignement géométrique
-     sur l'offsetParent (zéro décalage ou saut sur PWA).
-   - Ancrage initial automatique au chargement pour éviter tout conflit CSS.
-   - Ajout d'un bouton de réduction/restauration (— / ＋) à gauche de la croix.
-   - Sauvegarde et restauration des dimensions personnalisées après réduction.
+   Excelsheet Time Filler - v0.6.8
+   Nouveautés v0.6.8 :
+   - Ajout d'une fonction d'initialisation pour fermer proprement
+     toute édition en cours avant de démarrer (évite les conflits de focus).
+   - Remplacement de la validation par 'Tab' par une validation 'Enter' + blur()
+     qui remet la grille à l'état "Idle" après chaque cellule écrite.
+   - Suppression définitive de tout risque de décalage de jours.
    ============================================================ */
 
 (function () {
@@ -70,10 +70,9 @@
     #pwaTimeFillerHeader b { 
       font-size: 14px !important; 
       font-weight: 600 !important; 
-      padding-right: 80px !important; /* Espace suffisant pour les 2 boutons à droite */
+      padding-right: 80px !important;
     }
     
-    /* Bouton Fermer */
     #pwaTimeFillerHeader button#pwaTimeFillerClose { 
       position: absolute !important;
       top: 50% !important;
@@ -100,11 +99,10 @@
     }
     #pwaTimeFillerHeader button#pwaTimeFillerClose:hover { opacity: 1 !important; }
 
-    /* Bouton Réduire */
     #pwaTimeFillerHeader button#pwaTimeFillerMinimize { 
       position: absolute !important;
       top: 50% !important;
-      right: 46px !important; /* Positionné à gauche de la croix */
+      right: 46px !important;
       transform: translateY(-50%) !important;
       width: 24px !important;
       height: 24px !important;
@@ -257,7 +255,6 @@
       position: relative !important;
     }
 
-    /* Poignée de redimensionnement */
     .pwaTF-resize-handle {
       position: absolute !important;
       right: 0 !important;
@@ -504,9 +501,13 @@
 
     leftRows.forEach(row => {
       if (row.getAttribute('aria-level') !== '3') return;
-      const link = row.querySelector('a');
-      if (link) {
-        const text = link.textContent.trim();
+      
+      const links = Array.from(row.querySelectorAll('a'));
+      const taskLink = links.find(l => l.textContent.trim().length > 0);
+      
+      if (taskLink) {
+        let text = taskLink.textContent.trim();
+        text = text.replace(/Nouveau\s*!?$/i, '').trim();
         if (text) names.add(text);
       }
     });
@@ -522,13 +523,23 @@
   panel.querySelector('#pwaTF-btnRefresh').addEventListener('click', scanTaskNames);
 
   // ---------- Automatisation grille PWA ----------
+  
   function findRowIndex(taskText) {
     const leftTable = document.getElementById(GRID_ID + '_leftpane_mainTable');
     if (!leftTable) return -1;
     const leftRows = Array.from(leftTable.querySelector('tbody').children);
+    
     for (let i = 0; i < leftRows.length; i++) {
-      const link = leftRows[i].querySelector('a');
-      if (link && link.textContent.trim().includes(taskText)) return i;
+      if (leftRows[i].getAttribute('aria-level') !== '3') continue;
+      
+      const links = Array.from(leftRows[i].querySelectorAll('a'));
+      const hasMatch = links.some(link => {
+        let text = link.textContent.trim();
+        text = text.replace(/Nouveau\s*!?$/i, '').trim();
+        return text.includes(taskText);
+      });
+      
+      if (hasMatch) return i;
     }
     return -1;
   }
@@ -547,6 +558,23 @@
     cell.dispatchEvent(new MouseEvent('mousedown', opts));
     cell.dispatchEvent(new MouseEvent('mouseup', opts));
     cell.dispatchEvent(new MouseEvent('click', opts));
+  }
+
+  // CORRECTION v0.6.8 : Libérer le focus de la grille JSGrid si un champ est déjà en cours d'édition
+  function ensureGridIdle() {
+    return new Promise(resolve => {
+      const editbox = document.getElementById('jsgrid_editbox' + GRID_ID);
+      if (editbox) {
+        // Simule "Entrée" pour valider l'édition en cours
+        editbox.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true
+        }));
+        editbox.blur();
+        setTimeout(resolve, 300); // Laisse le temps au script de PWA d'enregistrer proprement
+      } else {
+        resolve();
+      }
+    });
   }
 
   function fillCell(rowIndex, dayCol, value) {
@@ -579,10 +607,13 @@
             editbox.dispatchEvent(new KeyboardEvent('keyup', { key: ch, bubbles: true }));
           });
 
+          // CORRECTION v0.6.8 : On valide avec 'Enter' et blur() à la place de 'Tab'
+          // Cela réinitialise le focus de la grille à l'état "idle" pour la suite
           setTimeout(() => {
             editbox.dispatchEvent(new KeyboardEvent('keydown', {
-              key: 'Tab', code: 'Tab', keyCode: 9, which: 9, bubbles: true, cancelable: true
+              key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true
             }));
+            editbox.blur();
             resolve();
           }, TYPE_DELAY);
 
@@ -598,6 +629,9 @@
     const applyBtn = panel.querySelector('#btnApplyWeek');
     applyBtn.disabled = true;
     applyBtn.style.opacity = '0.5';
+
+    setStatus('⚡ Initialisation...', 'Libération du focus de la grille...');
+    await ensureGridIdle(); // S'assure que l'utilisateur n'avait pas déjà un curseur actif
 
     setStatus('⚡ Remplissage en cours...', 'Veuillez ne pas toucher à la page');
     let ok = 0, fail = 0;
@@ -675,14 +709,12 @@
     let currentLeft = 0, currentTop = 0;
 
     header.addEventListener('mousedown', e => {
-      // Ignorer si on clique sur un bouton dans le header (fermer / réduire)
       if (e.target.closest('button')) return;
       
       dragging = true;
       startX = e.clientX;
       startY = e.clientY;
       
-      // Coordonnées absolues dans le référentiel de l'offsetParent
       const rect = panel.getBoundingClientRect();
       currentLeft = rect.left;
       currentTop = rect.top;
@@ -730,7 +762,7 @@
       startHeight = rect.height;
       
       e.preventDefault();
-      e.stopPropagation(); // Évite de déplacer la fenêtre en redimensionnant
+      e.stopPropagation();
     });
 
     document.addEventListener('mousemove', e => {
@@ -762,8 +794,6 @@
   loadRowsIntoUI(initialStore.templates[initialStore.lastUsed] || initialStore.templates[Object.keys(initialStore.templates)[0]]);
   scanTaskNames();
 
-  // FIXATION INITIALE : On force le panneau en coordonnées physiques absolues dès le premier affichage.
-  // Cela empêche tout effet de saut/latence au tout premier Drag ou Resize.
   const initialRect = panel.getBoundingClientRect();
   panel.style.setProperty('left', initialRect.left + 'px', 'important');
   panel.style.setProperty('top', initialRect.top + 'px', 'important');
